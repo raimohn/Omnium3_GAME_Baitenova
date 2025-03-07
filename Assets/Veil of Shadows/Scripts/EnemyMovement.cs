@@ -7,6 +7,18 @@ public class EnemyMovement : MonoBehaviour
     [Header(" Elements ")]
     private PlayerController player;
 
+
+    [Header(" Spawn Sequence Related ")]
+    [SerializeField] private SpriteRenderer renderer;
+
+    public EnemyMovement(SpriteRenderer renderer)
+    {
+        this.renderer = renderer;
+    }
+
+    [SerializeField] private SpriteRenderer spawnIndicator;
+    private bool hasSpawned;
+
     [Header(" Settings ")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float playerDetectionRadius;
@@ -25,19 +37,45 @@ public class EnemyMovement : MonoBehaviour
             Debug.LogWarning("No player found");
             Destroy(gameObject);
         }
+
+
+        renderer.enabled = false;
+        
+        spawnIndicator.enabled = true;
+
+       
+
+        Vector3 targetScale = spawnIndicator.transform.localScale * 1.15f;
+        LeanTween.scale(spawnIndicator.gameObject, targetScale, .3f)
+            .setLoopPingPong(4)
+            .setOnComplete(SpawnSequenceCompleted);
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        FollowPlayer();
+        if (!hasSpawned)
+            return;
 
+        FollowPlayer();
         TryAttack();
+
+    }
+
+    private void SpawnSequenceCompleted()
+    {
+        renderer.enabled = true;
+
+        spawnIndicator.enabled = false;
+
+        hasSpawned = true;
     }
 
     private void FollowPlayer()
     {
         Vector2 direction = (player.transform.position - transform.position).normalized;
+
         Vector2 targetPosition = (Vector2)transform.position + direction * moveSpeed * Time.deltaTime;
 
         transform.position = targetPosition;
